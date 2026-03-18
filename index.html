@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CCICT Admin Panel</title>
+    <style>
+      :root {
+        --navy: #001f3f;
+        --red: #ff4136;
+        --white: #ffffff;
+      }
+      body {
+        font-family: sans-serif;
+        margin: 0;
+        background: #f4f7f6;
+      }
+      #loginOverlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: var(--navy);
+        color: white;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+      }
+      header {
+        background: var(--navy);
+        color: white;
+        padding: 20px;
+        text-align: center;
+        font-weight: bold;
+      }
+      .container {
+        padding: 15px;
+        max-width: 500px;
+        margin: auto;
+      }
+      .card {
+        background: white;
+        padding: 20px;
+        border-radius: 12px;
+        margin-bottom: 20px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      }
+      input {
+        width: 100%;
+        padding: 12px;
+        margin: 10px 0;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        box-sizing: border-box;
+      }
+      button {
+        width: 100%;
+        padding: 15px;
+        border: none;
+        border-radius: 8px;
+        font-weight: bold;
+        cursor: pointer;
+        margin-top: 10px;
+      }
+      .btn-send {
+        background: var(--navy);
+        color: white;
+      }
+      .btn-emergency {
+        background: var(--red);
+        color: white;
+      }
+      .status-box {
+        padding: 15px;
+        border-radius: 8px;
+        text-align: center;
+        font-weight: bold;
+      }
+      .online {
+        background: #d4edda;
+        color: #155724;
+      }
+      .calling {
+        background: #f8d7da;
+        color: #721c24;
+        animation: blink 1s infinite;
+      }
+      @keyframes blink {
+        50% {
+          opacity: 0.5;
+        }
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.8rem;
+        margin-top: 10px;
+      }
+      th,
+      td {
+        border-bottom: 1px solid #eee;
+        padding: 8px;
+        text-align: left;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="loginOverlay">
+      <h2>CCICT Admin Login</h2>
+      <p>Enter Admin PIN:</p>
+      <input
+        type="password"
+        id="pinInput"
+        style="width: 200px; text-align: center"
+      />
+      <button
+        onclick="checkLogin()"
+        style="width: 200px; background: white; color: var(--navy)"
+      >
+        UNLOCK
+      </button>
+    </div>
+
+    <header>CCICT ADMIN DASHBOARD</header>
+
+    <div class="container">
+      <div class="card">
+        <h2>Live Announcement</h2>
+        <input
+          type="text"
+          id="lcdText"
+          placeholder="Enter message..."
+          maxlength="80"
+        />
+        <button class="btn-send" onclick="updateLCD()">
+          UPDATE LCD DISPLAY
+        </button>
+      </div>
+
+      <div class="card">
+        <h2>Room 1 Monitoring</h2>
+        <div id="statusIndicator" class="status-box online">SYSTEM STANDBY</div>
+        <p>Current LCD: <b id="currentMsg">--</b></p>
+        <p>Emergency Mode: <b id="emergencyStatus">OFF</b></p>
+        <button class="btn-emergency" onclick="toggleEmergency()">
+          TOGGLE EMERGENCY
+        </button>
+      </div>
+
+      <div class="card">
+        <h2>Recent History</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Time</th>
+              <th>Message</th>
+            </tr>
+          </thead>
+          <tbody id="historyBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <script type="module">
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+      import {
+        getDatabase,
+        ref,
+        onValue,
+        update,
+        push,
+        query,
+        limitToLast,
+        get,
+      } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
+
+      const firebaseConfig = {
+        apiKey: "AIzaSyAoS_7Kvc8_yv4q_1wvQvgf8jKcI2VnLcc",
+        authDomain: "ccict-smart-intercom.firebaseapp.com",
+        databaseURL:
+          "https://ccict-smart-intercom-default-rtdb.asia-southeast1.firebasedatabase.app",
+        projectId: "ccict-smart-intercom",
+        storageBucket: "ccict-smart-intercom.firebasestorage.app",
+        messagingSenderId: "735339405583",
+        appId: "1:735339405583:web:18472090d3036445bbde7a",
+      };
+
+      const app = initializeApp(firebaseConfig);
+      const db = getDatabase(app);
+
+      // PIN LOGIN
+      window.checkLogin = function () {
+        if (document.getElementById("pinInput").value === "2026") {
+          document.getElementById("loginOverlay").style.display = "none";
+        } else {
+          alert("Wrong PIN!");
+        }
+      };
+
+      // UPDATE LCD
+      window.updateLCD = function () {
+        const text = document.getElementById("lcdText").value;
+        const time = new Date().toLocaleTimeString();
+        update(ref(db, "rooms/room_1"), { Lcd_text: text });
+        push(ref(db, "logs"), { message: text, timestamp: time });
+      };
+
+      // TOGGLE EMERGENCY
+      window.toggleEmergency = function () {
+        const roomRef = ref(db, "rooms/room_1");
+        get(roomRef).then((snapshot) => {
+          if (snapshot.exists()) {
+            const currentEmergency = snapshot.val().is_emergency || false;
+            update(roomRef, { is_emergency: !currentEmergency });
+          }
+        });
+      };
+
+      // LIVE LISTENER
+      onValue(ref(db, "rooms/room_1"), (snapshot) => {
+        const data = snapshot.val();
+        if (data) {
+          // Update Text
+          document.getElementById("currentMsg").innerText =
+            data.Lcd_text || "--";
+
+          // Update Status Indicator (The Red/Green Box)
+          const indicator = document.getElementById("statusIndicator");
+          if (data.status != null && String(data.status) === "1") {
+            indicator.innerText = "ROOM 1: ACTIVE";
+            indicator.className = "status-box calling";
+          } else {
+            indicator.innerText = "SYSTEM STANDBY";
+            indicator.className = "status-box online";
+          }
+
+          // Update Emergency Label
+          const emStatus = document.getElementById("emergencyStatus");
+          const isEm =
+            data.is_emergency === true || data.is_emergency === "true";
+          emStatus.innerText = isEm ? "ON" : "OFF";
+          emStatus.style.color = isEm ? "red" : "black";
+        }
+      });
+
+      // LOGS LISTENER
+      const logRef = query(ref(db, "logs"), limitToLast(5));
+      onValue(logRef, (snapshot) => {
+        const historyBody = document.getElementById("historyBody");
+        historyBody.innerHTML = "";
+        snapshot.forEach((child) => {
+          const log = child.val();
+          const row = `<tr><td>${log.timestamp}</td><td>${log.message}</td></tr>`;
+          historyBody.innerHTML = row + historyBody.innerHTML;
+        });
+      });
+    </script>
+  </body>
+</html>
