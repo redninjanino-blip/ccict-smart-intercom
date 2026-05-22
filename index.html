@@ -3,166 +3,929 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>CCICT Admin Panel</title>
+    <title>CCICT Smart Intercom — Admin</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&family=Exo+2:wght@300;400;600;700&display=swap"
+      rel="stylesheet"
+    />
     <style>
       :root {
-        --navy: #001f3f;
-        --red: #ff4136;
-        --white: #ffffff;
+        --navy: #001529;
+        --navy2: #002244;
+        --navy3: #003366;
+        --accent: #00aaff;
+        --accent2: #0066cc;
+        --red: #ff2222;
+        --red2: #cc0000;
+        --green: #00cc66;
+        --yellow: #ffcc00;
+        --white: #f0f4f8;
+        --muted: #7a9ab5;
+        --card: rgba(0, 34, 68, 0.85);
+        --border: rgba(0, 170, 255, 0.2);
+        --glow: 0 0 20px rgba(0, 170, 255, 0.3);
       }
-      body {
-        font-family: sans-serif;
+
+      * {
+        box-sizing: border-box;
         margin: 0;
-        background: #f4f7f6;
+        padding: 0;
       }
+
+      body {
+        font-family: "Exo 2", sans-serif;
+        background: var(--navy);
+        color: var(--white);
+        min-height: 100vh;
+        overflow-x: hidden;
+      }
+
+      /* Grid background */
+      body::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        background-image: linear-gradient(
+            rgba(0, 170, 255, 0.03) 1px,
+            transparent 1px
+          ),
+          linear-gradient(90deg, rgba(0, 170, 255, 0.03) 1px, transparent 1px);
+        background-size: 40px 40px;
+        pointer-events: none;
+        z-index: 0;
+      }
+
+      /* ── LOGIN OVERLAY ── */
       #loginOverlay {
         position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
+        inset: 0;
         background: var(--navy);
-        color: white;
         display: flex;
         flex-direction: column;
         align-items: center;
         justify-content: center;
-        z-index: 1000;
+        z-index: 9999;
+        gap: 16px;
       }
-      header {
-        background: var(--navy);
-        color: white;
-        padding: 20px;
+
+      #loginOverlay::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(
+          ellipse at center,
+          rgba(0, 100, 200, 0.15) 0%,
+          transparent 70%
+        );
+      }
+
+      .login-box {
+        position: relative;
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 48px 40px;
+        width: 340px;
         text-align: center;
-        font-weight: bold;
+        box-shadow: var(--glow), 0 20px 60px rgba(0, 0, 0, 0.5);
       }
-      .container {
-        padding: 15px;
-        max-width: 500px;
-        margin: auto;
+
+      .login-logo {
+        font-family: "Rajdhani", sans-serif;
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--accent);
+        letter-spacing: 4px;
+        margin-bottom: 4px;
       }
-      .card {
-        background: white;
-        padding: 20px;
-        border-radius: 12px;
-        margin-bottom: 20px;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+
+      .login-sub {
+        font-size: 0.75rem;
+        color: var(--muted);
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        margin-bottom: 32px;
       }
-      input {
+
+      .pin-label {
+        font-size: 0.7rem;
+        letter-spacing: 3px;
+        text-transform: uppercase;
+        color: var(--muted);
+        margin-bottom: 12px;
+      }
+
+      .pin-input {
         width: 100%;
-        padding: 12px;
-        margin: 10px 0;
-        border: 1px solid #ddd;
+        padding: 14px;
+        background: rgba(0, 170, 255, 0.05);
+        border: 1px solid var(--border);
         border-radius: 8px;
-        box-sizing: border-box;
+        color: var(--accent);
+        font-family: "Share Tech Mono", monospace;
+        font-size: 1.4rem;
+        text-align: center;
+        letter-spacing: 8px;
+        outline: none;
+        transition: border-color 0.3s, box-shadow 0.3s;
+        margin-bottom: 16px;
       }
-      button {
+
+      .pin-input:focus {
+        border-color: var(--accent);
+        box-shadow: 0 0 12px rgba(0, 170, 255, 0.3);
+      }
+
+      .btn-unlock {
         width: 100%;
-        padding: 15px;
+        padding: 14px;
+        background: var(--accent2);
         border: none;
         border-radius: 8px;
-        font-weight: bold;
-        cursor: pointer;
-        margin-top: 10px;
-      }
-      .btn-send {
-        background: var(--navy);
         color: white;
+        font-family: "Rajdhani", sans-serif;
+        font-size: 1rem;
+        font-weight: 700;
+        letter-spacing: 3px;
+        cursor: pointer;
+        transition: background 0.2s, box-shadow 0.2s;
       }
-      .btn-emergency {
+
+      .btn-unlock:hover {
+        background: var(--accent);
+        box-shadow: 0 0 16px rgba(0, 170, 255, 0.4);
+      }
+
+      .login-error {
+        color: var(--red);
+        font-size: 0.75rem;
+        letter-spacing: 1px;
+        min-height: 18px;
+        margin-top: 8px;
+      }
+
+      /* ── EMERGENCY BANNER ── */
+      #emergencyBanner {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
         background: var(--red);
         color: white;
-      }
-      .status-box {
-        padding: 15px;
-        border-radius: 8px;
         text-align: center;
-        font-weight: bold;
+        padding: 14px;
+        font-family: "Rajdhani", sans-serif;
+        font-size: 1.1rem;
+        font-weight: 700;
+        letter-spacing: 4px;
+        z-index: 999;
+        animation: emergencyPulse 0.8s infinite;
       }
-      .online {
-        background: #d4edda;
-        color: #155724;
+
+      @keyframes emergencyPulse {
+        0%,
+        100% {
+          background: var(--red);
+        }
+        50% {
+          background: #880000;
+        }
       }
-      .calling {
-        background: #f8d7da;
-        color: #721c24;
-        animation: blink 1s infinite;
+
+      /* ── HEADER ── */
+      header {
+        position: relative;
+        background: linear-gradient(90deg, var(--navy2), var(--navy3));
+        border-bottom: 1px solid var(--border);
+        padding: 18px 32px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        z-index: 10;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
       }
-      @keyframes blink {
+
+      .header-left {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+      }
+
+      .header-logo {
+        font-family: "Rajdhani", sans-serif;
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--accent);
+        letter-spacing: 3px;
+      }
+
+      .header-title {
+        font-size: 0.7rem;
+        color: var(--muted);
+        letter-spacing: 2px;
+        text-transform: uppercase;
+      }
+
+      .header-right {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .conn-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--green);
+        box-shadow: 0 0 8px var(--green);
+        animation: connPulse 2s infinite;
+      }
+
+      @keyframes connPulse {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.4;
+        }
+      }
+
+      .conn-label {
+        font-size: 0.7rem;
+        color: var(--muted);
+        letter-spacing: 1px;
+        font-family: "Share Tech Mono", monospace;
+      }
+
+      #clockDisplay {
+        font-family: "Share Tech Mono", monospace;
+        font-size: 0.85rem;
+        color: var(--accent);
+        letter-spacing: 2px;
+      }
+
+      /* ── MAIN LAYOUT ── */
+      main {
+        position: relative;
+        z-index: 1;
+        padding: 28px 24px;
+        max-width: 1100px;
+        margin: auto;
+      }
+
+      .grid-2 {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+        margin-bottom: 20px;
+      }
+
+      .grid-3 {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 20px;
+        margin-bottom: 20px;
+      }
+
+      /* ── CARDS ── */
+      .card {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 24px;
+        backdrop-filter: blur(10px);
+        box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
+        transition: border-color 0.3s;
+      }
+
+      .card:hover {
+        border-color: rgba(0, 170, 255, 0.4);
+      }
+
+      .card-title {
+        font-family: "Rajdhani", sans-serif;
+        font-size: 0.65rem;
+        font-weight: 600;
+        letter-spacing: 3px;
+        text-transform: uppercase;
+        color: var(--muted);
+        margin-bottom: 16px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .card-title::before {
+        content: "";
+        display: inline-block;
+        width: 3px;
+        height: 14px;
+        background: var(--accent);
+        border-radius: 2px;
+      }
+
+      /* ── ROOM CARDS ── */
+      .room-name {
+        font-family: "Rajdhani", sans-serif;
+        font-size: 1.3rem;
+        font-weight: 700;
+        color: var(--white);
+        letter-spacing: 2px;
+        margin-bottom: 12px;
+      }
+
+      .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 14px;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        margin-bottom: 14px;
+        font-family: "Share Tech Mono", monospace;
+      }
+
+      .status-available {
+        background: rgba(0, 204, 102, 0.15);
+        color: var(--green);
+        border: 1px solid rgba(0, 204, 102, 0.3);
+      }
+
+      .status-occupied {
+        background: rgba(255, 204, 0, 0.15);
+        color: var(--yellow);
+        border: 1px solid rgba(255, 204, 0, 0.3);
+      }
+
+      .status-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+      }
+
+      .sched-block {
+        background: rgba(0, 170, 255, 0.08);
+        border: 1px solid rgba(0, 170, 255, 0.15);
+        border-radius: 8px;
+        padding: 12px;
+        font-size: 0.8rem;
+        line-height: 1.8;
+      }
+
+      .sched-label {
+        color: var(--muted);
+        font-size: 0.65rem;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+      }
+
+      .sched-value {
+        color: var(--white);
+        font-family: "Share Tech Mono", monospace;
+      }
+
+      .audio-indicator {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-top: 12px;
+        padding: 8px 12px;
+        border-radius: 6px;
+        background: rgba(0, 170, 255, 0.05);
+        border: 1px solid transparent;
+        font-size: 0.72rem;
+        color: var(--muted);
+        letter-spacing: 1px;
+        transition: all 0.3s;
+      }
+
+      .audio-indicator.active {
+        background: rgba(0, 170, 255, 0.12);
+        border-color: rgba(0, 170, 255, 0.3);
+        color: var(--accent);
+      }
+
+      .audio-wave {
+        display: flex;
+        gap: 2px;
+        align-items: center;
+      }
+
+      .audio-wave span {
+        display: block;
+        width: 3px;
+        background: var(--muted);
+        border-radius: 2px;
+        animation: none;
+      }
+
+      .audio-indicator.active .audio-wave span {
+        background: var(--accent);
+        animation: wave 0.6s infinite;
+      }
+
+      .audio-wave span:nth-child(1) {
+        height: 6px;
+        animation-delay: 0s;
+      }
+      .audio-wave span:nth-child(2) {
+        height: 12px;
+        animation-delay: 0.1s;
+      }
+      .audio-wave span:nth-child(3) {
+        height: 8px;
+        animation-delay: 0.2s;
+      }
+      .audio-wave span:nth-child(4) {
+        height: 14px;
+        animation-delay: 0.15s;
+      }
+      .audio-wave span:nth-child(5) {
+        height: 6px;
+        animation-delay: 0.05s;
+      }
+
+      @keyframes wave {
+        0%,
+        100% {
+          transform: scaleY(1);
+        }
+        50% {
+          transform: scaleY(0.3);
+        }
+      }
+
+      /* ── EMERGENCY CARD ── */
+      .emergency-card {
+        border-color: rgba(255, 34, 34, 0.3);
+      }
+
+      .emergency-card.active-em {
+        border-color: var(--red);
+        box-shadow: 0 0 30px rgba(255, 34, 34, 0.3);
+        animation: emCardPulse 1s infinite;
+      }
+
+      @keyframes emCardPulse {
+        0%,
+        100% {
+          box-shadow: 0 0 20px rgba(255, 34, 34, 0.2);
+        }
+        50% {
+          box-shadow: 0 0 40px rgba(255, 34, 34, 0.5);
+        }
+      }
+
+      .em-status {
+        font-family: "Rajdhani", sans-serif;
+        font-size: 1.8rem;
+        font-weight: 700;
+        letter-spacing: 4px;
+        margin-bottom: 16px;
+      }
+
+      .em-off {
+        color: var(--muted);
+      }
+      .em-on {
+        color: var(--red);
+        animation: emTextBlink 0.8s infinite;
+      }
+
+      @keyframes emTextBlink {
+        0%,
+        100% {
+          opacity: 1;
+        }
         50% {
           opacity: 0.5;
         }
       }
-      table {
+
+      .btn-emergency {
         width: 100%;
-        border-collapse: collapse;
-        font-size: 0.8rem;
-        margin-top: 10px;
+        padding: 16px;
+        border: 2px solid var(--red);
+        border-radius: 10px;
+        background: rgba(255, 34, 34, 0.1);
+        color: var(--red);
+        font-family: "Rajdhani", sans-serif;
+        font-size: 1rem;
+        font-weight: 700;
+        letter-spacing: 3px;
+        cursor: pointer;
+        transition: all 0.2s;
       }
-      th,
-      td {
-        border-bottom: 1px solid #eee;
-        padding: 8px;
-        text-align: left;
+
+      .btn-emergency:hover {
+        background: var(--red);
+        color: white;
+        box-shadow: 0 0 20px rgba(255, 34, 34, 0.5);
+      }
+
+      .btn-emergency.em-active {
+        background: var(--red);
+        color: white;
+        animation: emBtnPulse 0.8s infinite;
+      }
+
+      @keyframes emBtnPulse {
+        0%,
+        100% {
+          box-shadow: 0 0 10px rgba(255, 34, 34, 0.5);
+        }
+        50% {
+          box-shadow: 0 0 30px rgba(255, 34, 34, 0.9);
+        }
+      }
+
+      /* ── SCHEDULE FORM ── */
+      .form-group {
+        margin-bottom: 14px;
+      }
+
+      .form-label {
+        font-size: 0.65rem;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        color: var(--muted);
+        margin-bottom: 6px;
+        display: block;
+      }
+
+      .form-input,
+      .form-select {
+        width: 100%;
+        padding: 10px 14px;
+        background: rgba(0, 170, 255, 0.05);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        color: var(--white);
+        font-family: "Exo 2", sans-serif;
+        font-size: 0.85rem;
+        outline: none;
+        transition: border-color 0.3s, box-shadow 0.3s;
+      }
+
+      .form-input:focus,
+      .form-select:focus {
+        border-color: var(--accent);
+        box-shadow: 0 0 10px rgba(0, 170, 255, 0.2);
+      }
+
+      .form-input::placeholder {
+        color: var(--muted);
+      }
+
+      .form-select option {
+        background: var(--navy2);
+      }
+
+      .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+      }
+
+      .btn-primary {
+        width: 100%;
+        padding: 12px;
+        background: var(--accent2);
+        border: none;
+        border-radius: 8px;
+        color: white;
+        font-family: "Rajdhani", sans-serif;
+        font-size: 0.9rem;
+        font-weight: 700;
+        letter-spacing: 2px;
+        cursor: pointer;
+        transition: all 0.2s;
+        margin-top: 4px;
+      }
+
+      .btn-primary:hover {
+        background: var(--accent);
+        box-shadow: 0 0 14px rgba(0, 170, 255, 0.4);
+      }
+
+      .btn-danger {
+        width: 100%;
+        padding: 10px;
+        background: transparent;
+        border: 1px solid rgba(255, 34, 34, 0.4);
+        border-radius: 8px;
+        color: var(--red);
+        font-family: "Rajdhani", sans-serif;
+        font-size: 0.85rem;
+        font-weight: 600;
+        letter-spacing: 2px;
+        cursor: pointer;
+        transition: all 0.2s;
+        margin-top: 8px;
+      }
+
+      .btn-danger:hover {
+        background: rgba(255, 34, 34, 0.1);
+        border-color: var(--red);
+      }
+
+      /* ── LOGS ── */
+      .log-entry {
+        display: flex;
+        gap: 12px;
+        padding: 10px 0;
+        border-bottom: 1px solid rgba(0, 170, 255, 0.08);
+        font-size: 0.78rem;
+        align-items: flex-start;
+      }
+
+      .log-entry:last-child {
+        border-bottom: none;
+      }
+
+      .log-time {
+        font-family: "Share Tech Mono", monospace;
+        color: var(--accent);
+        font-size: 0.7rem;
+        white-space: nowrap;
+        min-width: 70px;
+      }
+
+      .log-msg {
+        color: var(--muted);
+        line-height: 1.4;
+      }
+
+      .log-type {
+        font-size: 0.6rem;
+        padding: 2px 6px;
+        border-radius: 4px;
+        letter-spacing: 1px;
+        white-space: nowrap;
+      }
+
+      .log-sched {
+        background: rgba(0, 170, 255, 0.15);
+        color: var(--accent);
+      }
+      .log-status {
+        background: rgba(0, 204, 102, 0.15);
+        color: var(--green);
+      }
+      .log-em {
+        background: rgba(255, 34, 34, 0.15);
+        color: var(--red);
+      }
+
+      /* ── RESPONSIVE ── */
+      @media (max-width: 768px) {
+        .grid-2,
+        .grid-3 {
+          grid-template-columns: 1fr;
+        }
+        main {
+          padding: 16px;
+        }
+        header {
+          padding: 14px 16px;
+        }
+      }
+
+      /* ── TOAST ── */
+      #toast {
+        position: fixed;
+        bottom: 24px;
+        right: 24px;
+        background: var(--navy2);
+        border: 1px solid var(--accent);
+        color: var(--accent);
+        padding: 12px 20px;
+        border-radius: 8px;
+        font-size: 0.8rem;
+        letter-spacing: 1px;
+        z-index: 9998;
+        opacity: 0;
+        transform: translateY(10px);
+        transition: all 0.3s;
+        pointer-events: none;
+      }
+
+      #toast.show {
+        opacity: 1;
+        transform: translateY(0);
+      }
+
+      .no-sched {
+        color: var(--muted);
+        font-size: 0.78rem;
+        font-style: italic;
+        padding: 8px 0;
+      }
+
+      input[type="date"]::-webkit-calendar-picker-indicator,
+      input[type="time"]::-webkit-calendar-picker-indicator {
+        filter: invert(0.5) sepia(1) saturate(5) hue-rotate(175deg);
+        cursor: pointer;
       }
     </style>
   </head>
   <body>
+    <!-- LOGIN -->
     <div id="loginOverlay">
-      <h2>CCICT Admin Login</h2>
-      <p>Enter Admin PIN:</p>
-      <input
-        type="password"
-        id="pinInput"
-        style="width: 200px; text-align: center"
-      />
-      <button
-        onclick="checkLogin()"
-        style="width: 200px; background: white; color: var(--navy)"
-      >
-        UNLOCK
-      </button>
-    </div>
-
-    <header>CCICT ADMIN DASHBOARD</header>
-
-    <div class="container">
-      <div class="card">
-        <h2>Live Announcement</h2>
+      <div class="login-box">
+        <div class="login-logo">CCICT</div>
+        <div class="login-sub">Smart Intercom System</div>
+        <div class="pin-label">Enter Admin PIN</div>
         <input
-          type="text"
-          id="lcdText"
-          placeholder="Enter message..."
-          maxlength="80"
+          type="password"
+          id="pinInput"
+          class="pin-input"
+          maxlength="6"
+          placeholder="••••"
+          onkeydown="if(event.key==='Enter') checkLogin()"
         />
-        <button class="btn-send" onclick="updateLCD()">
-          UPDATE LCD DISPLAY
-        </button>
-      </div>
-
-      <div class="card">
-        <h2>Room 1 Monitoring</h2>
-        <div id="statusIndicator" class="status-box online">SYSTEM STANDBY</div>
-        <p>Current LCD: <b id="currentMsg">--</b></p>
-        <p>Emergency Mode: <b id="emergencyStatus">OFF</b></p>
-        <button class="btn-emergency" onclick="toggleEmergency()">
-          TOGGLE EMERGENCY
-        </button>
-      </div>
-
-      <div class="card">
-        <h2>Recent History</h2>
-        <table>
-          <thead>
-            <tr>
-              <th>Time</th>
-              <th>Message</th>
-            </tr>
-          </thead>
-          <tbody id="historyBody"></tbody>
-        </table>
+        <button class="btn-unlock" onclick="checkLogin()">UNLOCK</button>
+        <div class="login-error" id="loginError"></div>
       </div>
     </div>
+
+    <!-- EMERGENCY BANNER -->
+    <div id="emergencyBanner">
+      ⚠ EMERGENCY MODE ACTIVE — ALL NODES ALERTING ⚠
+    </div>
+
+    <!-- HEADER -->
+    <header id="mainHeader" style="margin-top: 0">
+      <div class="header-left">
+        <div>
+          <div class="header-logo">CCICT</div>
+          <div class="header-title">Smart Intercom — Admin Dashboard</div>
+        </div>
+      </div>
+      <div class="header-right">
+        <div class="conn-dot" id="connDot"></div>
+        <div class="conn-label" id="connLabel">CONNECTING...</div>
+        <div id="clockDisplay">--:--:--</div>
+      </div>
+    </header>
+
+    <!-- MAIN -->
+    <main>
+      <!-- ROW 1: Room Cards -->
+      <div class="grid-2">
+        <!-- ADMIN ROOM CARD -->
+        <div class="card" id="card-admin">
+          <div class="card-title">Admin Node</div>
+          <div class="room-name" id="name-admin">ADMIN (CCICT)</div>
+          <div id="badge-admin" class="status-badge status-available">
+            <span class="status-dot" style="background: var(--green)"></span>
+            AVAILABLE
+          </div>
+          <div id="sched-admin" class="no-sched">
+            No scheduled class or event.
+          </div>
+          <div class="audio-indicator" id="audio-admin">
+            <div class="audio-wave">
+              <span></span><span></span><span></span><span></span><span></span>
+            </div>
+            <span id="audioLabel-admin">NO AUDIO ACTIVITY</span>
+          </div>
+        </div>
+
+        <!-- ROOM 1 CARD -->
+        <div class="card" id="card-room_1">
+          <div class="card-title">Room Node</div>
+          <div class="room-name" id="name-room_1">ROOM 1 (CCICT)</div>
+          <div id="badge-room_1" class="status-badge status-available">
+            <span class="status-dot" style="background: var(--green)"></span>
+            AVAILABLE
+          </div>
+          <div id="sched-room_1" class="no-sched">
+            No scheduled class or event.
+          </div>
+          <div class="audio-indicator" id="audio-room_1">
+            <div class="audio-wave">
+              <span></span><span></span><span></span><span></span><span></span>
+            </div>
+            <span id="audioLabel-room_1">NO AUDIO ACTIVITY</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ROW 2: Emergency + Schedule -->
+      <div class="grid-3">
+        <!-- EMERGENCY CARD -->
+        <div class="card emergency-card" id="emergencyCard">
+          <div class="card-title">Emergency Control</div>
+          <div class="em-status em-off" id="emStatusText">STANDBY</div>
+          <p
+            style="
+              font-size: 0.75rem;
+              color: var(--muted);
+              margin-bottom: 16px;
+              line-height: 1.6;
+            "
+          >
+            Triggers alert on all intercom nodes simultaneously. Only admin can
+            clear.
+          </p>
+          <button
+            class="btn-emergency"
+            id="btnEmergency"
+            onclick="toggleEmergency()"
+          >
+            ACTIVATE EMERGENCY
+          </button>
+        </div>
+
+        <!-- SCHEDULE SETTER — ADMIN -->
+        <div class="card">
+          <div class="card-title">Set Schedule — Admin</div>
+          <div class="form-group">
+            <label class="form-label">Class / Event</label>
+            <input
+              type="text"
+              class="form-input"
+              id="sched-class-admin"
+              placeholder="e.g. BIT-CT 3-A"
+            />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Date</label>
+            <input type="date" class="form-input" id="sched-date-admin" />
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Start</label>
+              <input type="time" class="form-input" id="sched-start-admin" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">End</label>
+              <input type="time" class="form-input" id="sched-end-admin" />
+            </div>
+          </div>
+          <button class="btn-primary" onclick="setSchedule('admin')">
+            SET SCHEDULE
+          </button>
+          <button class="btn-danger" onclick="clearSchedule('admin')">
+            CLEAR SCHEDULE
+          </button>
+        </div>
+
+        <!-- SCHEDULE SETTER — ROOM 1 -->
+        <div class="card">
+          <div class="card-title">Set Schedule — Room 1</div>
+          <div class="form-group">
+            <label class="form-label">Class / Event</label>
+            <input
+              type="text"
+              class="form-input"
+              id="sched-class-room_1"
+              placeholder="e.g. BIT-CT 3-A"
+            />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Date</label>
+            <input type="date" class="form-input" id="sched-date-room_1" />
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Start</label>
+              <input type="time" class="form-input" id="sched-start-room_1" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">End</label>
+              <input type="time" class="form-input" id="sched-end-room_1" />
+            </div>
+          </div>
+          <button class="btn-primary" onclick="setSchedule('room_1')">
+            SET SCHEDULE
+          </button>
+          <button class="btn-danger" onclick="clearSchedule('room_1')">
+            CLEAR SCHEDULE
+          </button>
+        </div>
+      </div>
+
+      <!-- ROW 3: Activity Log -->
+      <div class="card">
+        <div class="card-title">Activity Log</div>
+        <div id="logContainer">
+          <div class="log-entry">
+            <span class="log-time">--:--:--</span>
+            <span class="log-msg">Waiting for activity...</span>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- TOAST -->
+    <div id="toast"></div>
 
     <script type="module">
       import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
@@ -170,10 +933,8 @@
         getDatabase,
         ref,
         onValue,
+        set,
         update,
-        push,
-        query,
-        limitToLast,
         get,
       } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
 
@@ -191,72 +952,293 @@
       const app = initializeApp(firebaseConfig);
       const db = getDatabase(app);
 
-      // PIN LOGIN
+      // ── CLOCK ──
+      function updateClock() {
+        const now = new Date();
+        document.getElementById("clockDisplay").textContent =
+          now.toLocaleTimeString("en-US", { hour12: false });
+      }
+      setInterval(updateClock, 1000);
+      updateClock();
+
+      // ── LOGIN ──
       window.checkLogin = function () {
-        if (document.getElementById("pinInput").value === "2026") {
+        const val = document.getElementById("pinInput").value;
+        if (val === "2026") {
           document.getElementById("loginOverlay").style.display = "none";
         } else {
-          alert("Wrong PIN!");
+          document.getElementById("loginError").textContent =
+            "INCORRECT PIN. TRY AGAIN.";
+          document.getElementById("pinInput").value = "";
         }
       };
 
-      // UPDATE LCD
-      window.updateLCD = function () {
-        const text = document.getElementById("lcdText").value;
-        const time = new Date().toLocaleTimeString();
-        update(ref(db, "rooms/room_1"), { Lcd_text: text });
-        push(ref(db, "logs"), { message: text, timestamp: time });
-      };
+      // ── TOAST ──
+      function showToast(msg) {
+        const t = document.getElementById("toast");
+        t.textContent = msg;
+        t.classList.add("show");
+        setTimeout(() => t.classList.remove("show"), 2500);
+      }
 
-      // TOGGLE EMERGENCY
-      window.toggleEmergency = function () {
-        const roomRef = ref(db, "rooms/room_1");
-        get(roomRef).then((snapshot) => {
-          if (snapshot.exists()) {
-            const currentEmergency = snapshot.val().is_emergency || false;
-            update(roomRef, { is_emergency: !currentEmergency });
-          }
-        });
-      };
+      // ── ACTIVITY LOG ──
+      const logs = [];
+      function addLog(msg, type = "status") {
+        const now = new Date().toLocaleTimeString("en-US", { hour12: false });
+        logs.unshift({ time: now, msg, type });
+        if (logs.length > 20) logs.pop();
+        renderLogs();
+      }
 
-      // LIVE LISTENER
-      onValue(ref(db, "rooms/room_1"), (snapshot) => {
-        const data = snapshot.val();
-        if (data) {
-          // Update Text
-          document.getElementById("currentMsg").innerText =
-            data.Lcd_text || "--";
+      function renderLogs() {
+        const c = document.getElementById("logContainer");
+        if (logs.length === 0) {
+          c.innerHTML =
+            '<div class="log-entry"><span class="log-msg">No activity yet.</span></div>';
+          return;
+        }
+        c.innerHTML = logs
+          .map(
+            (l) => `
+      <div class="log-entry">
+        <span class="log-time">${l.time}</span>
+        <span class="log-type log-${l.type}">${l.type.toUpperCase()}</span>
+        <span class="log-msg">${l.msg}</span>
+      </div>
+    `
+          )
+          .join("");
+      }
 
-          // Update Status Indicator (The Red/Green Box)
-          const indicator = document.getElementById("statusIndicator");
-          if (data.status != null && String(data.status) === "1") {
-            indicator.innerText = "ROOM 1: ACTIVE";
-            indicator.className = "status-box calling";
+      // ── UPDATE ROOM CARD ──
+      function updateRoomCard(nodeId, data) {
+        if (!data) return;
+
+        // Room name
+        if (data.name)
+          document.getElementById(`name-${nodeId}`).textContent = data.name;
+
+        const sched = data.schedule || {};
+        const schedActive = sched.active === true;
+        const status = data.status || "available";
+
+        // Status badge — only show if NO active schedule
+        const badge = document.getElementById(`badge-${nodeId}`);
+        if (!schedActive) {
+          if (status === "occupied") {
+            badge.className = "status-badge status-occupied";
+            badge.innerHTML = `<span class="status-dot" style="background:var(--yellow)"></span> OCCUPIED`;
           } else {
-            indicator.innerText = "SYSTEM STANDBY";
-            indicator.className = "status-box online";
+            badge.className = "status-badge status-available";
+            badge.innerHTML = `<span class="status-dot" style="background:var(--green)"></span> AVAILABLE`;
           }
+          badge.style.display = "inline-flex";
+        } else {
+          badge.style.display = "none";
+        }
 
-          // Update Emergency Label
-          const emStatus = document.getElementById("emergencyStatus");
-          const isEm =
-            data.is_emergency === true || data.is_emergency === "true";
-          emStatus.innerText = isEm ? "ON" : "OFF";
-          emStatus.style.color = isEm ? "red" : "black";
+        // Schedule block
+        const schedEl = document.getElementById(`sched-${nodeId}`);
+        if (schedActive && sched.class) {
+          schedEl.className = "sched-block";
+          schedEl.innerHTML = `
+        <div><span class="sched-label">Class/Event </span><span class="sched-value">${
+          sched.class
+        }</span></div>
+        <div><span class="sched-label">Date </span><span class="sched-value">${
+          sched.date || "--"
+        }</span></div>
+        <div><span class="sched-label">Schedule </span><span class="sched-value">${
+          sched.start || "--"
+        } – ${sched.end || "--"}</span></div>
+      `;
+        } else {
+          schedEl.className = "no-sched";
+          schedEl.textContent = "No scheduled class or event.";
+        }
+
+        // Auto-revert check (25 min = 1500000ms)
+        if (schedActive && sched.start && sched.date) {
+          checkAutoRevert(nodeId, sched);
+        }
+      }
+
+      // ── AUTO-REVERT (website side monitoring) ──
+      // ESP32 handles this physically, but website also monitors and can clear
+      const revertTimers = {};
+      function checkAutoRevert(nodeId, sched) {
+        if (revertTimers[nodeId]) return; // already watching
+
+        const schedDate = sched.date;
+        const schedStart = sched.start;
+        if (!schedDate || !schedStart) return;
+
+        const startTime = new Date(`${schedDate}T${schedStart}:00`);
+        const revertTime = new Date(startTime.getTime() + 25 * 60 * 1000);
+
+        const now = new Date();
+        const msLeft = revertTime - now;
+
+        if (msLeft <= 0) {
+          // Already past revert time, clear immediately
+          clearSchedule(nodeId, true);
+          return;
+        }
+
+        revertTimers[nodeId] = setTimeout(async () => {
+          // Check if still active and status still not occupied
+          const snap = await get(ref(db, `rooms/${nodeId}`));
+          const d = snap.val();
+          if (d && d.schedule && d.schedule.active && d.status !== "occupied") {
+            clearSchedule(nodeId, true);
+            addLog(
+              `Auto-revert: ${nodeId} schedule cleared (no confirmation in 25 min)`,
+              "status"
+            );
+          }
+          delete revertTimers[nodeId];
+        }, msLeft);
+      }
+
+      // ── FIREBASE LISTENERS ──
+
+      // Emergency
+      onValue(ref(db, "emergency"), (snap) => {
+        const isEm = snap.val() === true;
+        const banner = document.getElementById("emergencyBanner");
+        const emCard = document.getElementById("emergencyCard");
+        const emText = document.getElementById("emStatusText");
+        const btn = document.getElementById("btnEmergency");
+        const header = document.getElementById("mainHeader");
+
+        if (isEm) {
+          banner.style.display = "block";
+          header.style.marginTop = "48px";
+          emCard.classList.add("active-em");
+          emText.className = "em-status em-on";
+          emText.textContent = "⚠ ACTIVE";
+          btn.textContent = "CLEAR EMERGENCY";
+          btn.classList.add("em-active");
+          document.getElementById("connDot").style.background = "var(--red)";
+        } else {
+          banner.style.display = "none";
+          header.style.marginTop = "0";
+          emCard.classList.remove("active-em");
+          emText.className = "em-status em-off";
+          emText.textContent = "STANDBY";
+          btn.textContent = "ACTIVATE EMERGENCY";
+          btn.classList.remove("em-active");
+          document.getElementById("connDot").style.background = "var(--green)";
         }
       });
 
-      // LOGS LISTENER
-      const logRef = query(ref(db, "logs"), limitToLast(5));
-      onValue(logRef, (snapshot) => {
-        const historyBody = document.getElementById("historyBody");
-        historyBody.innerHTML = "";
-        snapshot.forEach((child) => {
-          const log = child.val();
-          const row = `<tr><td>${log.timestamp}</td><td>${log.message}</td></tr>`;
-          historyBody.innerHTML = row + historyBody.innerHTML;
+      // Rooms
+      ["admin", "room_1"].forEach((nodeId) => {
+        onValue(ref(db, `rooms/${nodeId}`), (snap) => {
+          updateRoomCard(nodeId, snap.val());
         });
       });
+
+      // Audio indicators
+      ["admin", "room_1"].forEach((nodeId) => {
+        onValue(ref(db, `audio/${nodeId}/ready`), (snap) => {
+          const isReady = snap.val() === true;
+          const el = document.getElementById(`audio-${nodeId}`);
+          const label = document.getElementById(`audioLabel-${nodeId}`);
+          if (isReady) {
+            el.classList.add("active");
+            label.textContent = "INCOMING AUDIO...";
+            addLog(`Audio message received at ${nodeId}`, "status");
+          } else {
+            el.classList.remove("active");
+            label.textContent = "NO AUDIO ACTIVITY";
+          }
+        });
+      });
+
+      // Connection status
+      onValue(ref(db, ".info/connected"), (snap) => {
+        const connected = snap.val() === true;
+        document.getElementById("connLabel").textContent = connected
+          ? "CONNECTED"
+          : "OFFLINE";
+        document.getElementById("connDot").style.background = connected
+          ? "var(--green)"
+          : "var(--red)";
+      });
+
+      // ── EMERGENCY TOGGLE ──
+      window.toggleEmergency = async function () {
+        const snap = await get(ref(db, "emergency"));
+        const current = snap.val() === true;
+        const next = !current;
+        await set(ref(db, "emergency"), next);
+        addLog(`Emergency ${next ? "ACTIVATED" : "CLEARED"} by admin`, "em");
+        showToast(next ? "⚠ Emergency activated!" : "✓ Emergency cleared");
+      };
+
+      // ── SET SCHEDULE ──
+      window.setSchedule = async function (nodeId) {
+        const cls = document
+          .getElementById(`sched-class-${nodeId}`)
+          .value.trim();
+        const date = document.getElementById(`sched-date-${nodeId}`).value;
+        const start = document.getElementById(`sched-start-${nodeId}`).value;
+        const end = document.getElementById(`sched-end-${nodeId}`).value;
+
+        if (!cls || !date || !start || !end) {
+          showToast("Please fill all schedule fields!");
+          return;
+        }
+
+        await update(ref(db, `rooms/${nodeId}/schedule`), {
+          active: true,
+          class: cls,
+          date: date,
+          start: start,
+          end: end,
+        });
+
+        // Clear form
+        document.getElementById(`sched-class-${nodeId}`).value = "";
+        document.getElementById(`sched-date-${nodeId}`).value = "";
+        document.getElementById(`sched-start-${nodeId}`).value = "";
+        document.getElementById(`sched-end-${nodeId}`).value = "";
+
+        addLog(
+          `Schedule set for ${nodeId}: ${cls} on ${date} (${start}–${end})`,
+          "sched"
+        );
+        showToast(`✓ Schedule set for ${nodeId}`);
+
+        // Reset revert timer
+        if (revertTimers[nodeId]) {
+          clearTimeout(revertTimers[nodeId]);
+          delete revertTimers[nodeId];
+        }
+      };
+
+      // ── CLEAR SCHEDULE ──
+      window.clearSchedule = async function (nodeId, auto = false) {
+        await update(ref(db, `rooms/${nodeId}/schedule`), {
+          active: false,
+          class: "",
+          date: "",
+          start: "",
+          end: "",
+        });
+        await update(ref(db, `rooms/${nodeId}`), { status: "available" });
+
+        if (!auto) {
+          addLog(`Schedule manually cleared for ${nodeId}`, "sched");
+          showToast(`✓ Schedule cleared for ${nodeId}`);
+        }
+
+        if (revertTimers[nodeId]) {
+          clearTimeout(revertTimers[nodeId]);
+          delete revertTimers[nodeId];
+        }
+      };
     </script>
   </body>
 </html>
